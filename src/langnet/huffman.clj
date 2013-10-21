@@ -26,6 +26,17 @@
    :symbols (union (symbols left) (symbols right))
    :weight (+ (left :weight) (right :weight))})
 
+(defn generate-huffman-tree
+  "Generate a huffman tree from a list of symbol-frequency pairs"
+  [pairs]
+  (let [leaves (map #(make-leaf (first %) (second %)) pairs)
+        successive-merge (fn [leaves]
+                           (if (= 1 (count leaves))
+                             (first leaves)
+                             (let [sorted-leaves (sort #(< (%1 :weight) (%2 :weight)) leaves)]
+                               (recur (conj (drop 2 sorted-leaves) (make-tree (second sorted-leaves) (first sorted-leaves)))))))]
+    (successive-merge leaves)))
+
 (defn decode
   "Decode vector of bits given a Huffman tree"
   [bits tree]
@@ -60,18 +71,6 @@
       []
       (concat (vec (encode-symbol (first message) tree))
               (encode (rest message) tree)))))
-
-(defn generate-huffman-tree
-  "Generate a huffman tree from a list of symbol-frequency pairs"
-  [pairs]
-  (let [leaves (map #(make-leaf (first %) (second %)) pairs)
-        successive-merge (fn successive-merge [leaves]
-                           (if (= 1 (count leaves))
-                             (first leaves)
-                             (let [sorted-leaves (sort #(< (%1 :weight) (%2 :weight)) leaves)]
-                               (successive-merge (conj (drop 2 sorted-leaves) (make-tree (second sorted-leaves) (first sorted-leaves)))))))]
-    (successive-merge leaves)))
-
 
 (defn count-symbols
   "Create a map of symbol-frequency pairs from a string
